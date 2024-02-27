@@ -11,7 +11,45 @@ import Icon from '@mui/material/Icon';
 
 const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
+interface ICalendarCell {
+  date: string;
+}
+
+function generateCalendar(date: string): ICalendarCell[][] {
+  const weeks: ICalendarCell[][] = [];
+  const jsDate = new Date(date + "T10:00:00");
+  const currentMonth = jsDate.getMonth();
+
+  const currentDay = new Date(jsDate.valueOf());
+  currentDay.setDate(1);
+  const dayOfWeek = currentDay.getDay();
+  currentDay.setDate(1 - dayOfWeek);
+
+  do {
+    const week: ICalendarCell[] = [];
+    for (let i = 0; i < daysOfWeek.length; i++) {
+      const isoDate = `
+        ${currentDay.getFullYear()}-
+        ${(currentDay.getMonth() + 1).toString().padStart(2, "0")}-
+        ${currentDay.getDate().toString().padStart(2, "0")}
+      `;
+      week.push({ date: isoDate })
+      currentDay.setDate(currentDay.getDate() + 1);
+    }
+    weeks.push(week);
+  } while (currentDay.getMonth() <= currentMonth);
+
+  return weeks
+}
+
+function getToday(): string {
+  return "2021-06-01";
+}
+
 export function CalendarScreen() {
+  const weeks = generateCalendar(getToday());
+
+
   return (
     <Box
       sx={{ display: 'flex', alignItems: 'stretch' ,height: '100%' }}
@@ -56,27 +94,20 @@ export function CalendarScreen() {
           </TableHead>
           
           <TableBody>
-              <TableRow>
-                {daysOfWeek.map(day => 
-                  <TableCell align='center' sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>x</TableCell>
-                )}
+            {weeks.map((week, index) => (
+              <TableRow key={index}>
+                {
+                  week.map((cell) => (
+                    <TableCell key={cell.date} align='center' sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>
+                      {cell.date}
+                    </TableCell>
+                  ))
+                }
               </TableRow>
-
-              <TableRow>
-                {daysOfWeek.map(day => 
-                  <TableCell align='center' sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>x</TableCell>
-                )}
-              </TableRow>
-
-              <TableRow>
-                {daysOfWeek.map(day => 
-                  <TableCell align='center' sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>x</TableCell>
-                )}
-              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
     </Box>
-
   )
 }
