@@ -13,13 +13,15 @@ import { ICalendar, IEvent, getCalendars, getEvents } from '../backend/backend';
 
 const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
+
+type IEventWithCalendar = IEvent & { calendar: ICalendar }; 
 interface ICalendarCell {
   date: string;
   dayOfMonth: number;
-  events: (IEvent & { calendar: ICalendar })[];
+  events: IEventWithCalendar[];
 }
 
-function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalendar[]): ICalendarCell[][] {
+function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalendar[], calendarsSelected:boolean[]): ICalendarCell[][] {
   const weeks: ICalendarCell[][] = [];
   const jsDate = new Date(date + "T12:00:00");
   const currentMonth = jsDate.getMonth();
@@ -37,13 +39,21 @@ function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalenda
         ${(currentDay.getMonth() + 1).toString().padStart(2, "0")}-
         ${currentDay.getDate().toString().padStart(2, "0")}
       `;
+
+      const events: IEventWithCalendar[] = [];
+      for (const event of allEvents) {
+        if (event.date === isoDate) {
+          const callIndex = calendars.findIndex(cal => cal.id === event.calendarId);
+          if (calendarsSelected[callIndex]) {
+            events.push({ ...event, calendar: calendars[callIndex] })
+          }
+        }
+      }
+
       week.push({ 
         dayOfMonth: currentDay.getDate(), 
         date: isoDate, 
-        events: allEvents.filter(event => event.date === isoDate).map(e => {
-          const calendar = calendars.find((cal) => cal.id === e.calendarId)!;
-          return { ...e, calendar };
-        })
+        events,
       })
       currentDay.setDate(currentDay.getDate() + 1);
     }
@@ -60,7 +70,8 @@ function getToday(): string {
 export function CalendarScreen() {
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
   const [events, setEvents] = useState<IEvent[]>([]);
-  const weeks = generateCalendar(getToday(), events, calendars);
+  const [calendarsSelected, setCalendarSelected] = useState<boolean[]>([]);
+  const weeks = generateCalendar(getToday(), events, calendars, calendarsSelected);
   const firsDate = weeks[0][0].date;
   const lastDate = weeks[weeks.length - 1][6].date;
 
@@ -68,9 +79,16 @@ export function CalendarScreen() {
     Promise.all([getCalendars(),
     getEvents(firsDate, lastDate)]).then(([calendars, events]) => {
       setCalendars(calendars);
+      setCalendarSelected(calendars.map(() => true));
       setEvents(events);
     });
   }, [firsDate, lastDate])
+
+  function toggleCalendar(i: number) {
+    const newValue = [...calendarsSelected];
+    newValue[i] = !newValue[i];
+    setCalendarSelected(newValue);
+  }
 
   return (
     <Box
@@ -82,12 +100,21 @@ export function CalendarScreen() {
 
         <Box sx={{ marginTop: '64px', display: 'flex', flexDirection: 'column' }}>
           <h3>Agendas</h3>
-          <FormControlLabel control={ <Checkbox color="success"/> } label="Pessoal" />
-          <FormControlLabel control={ <Checkbox color="secondary" /> } label="Pessoal" />
+          {calendars.map((calendar, i) => (
+            <FormControlLabel key={calendar.id} control={ 
+              <Checkbox 
+                checked={calendarsSelected[i]} 
+                onChange={() => toggleCalendar(i)}
+                style={{ 
+                  color: calendar.color,
+                }}/> 
+              } 
+                label={calendar.name} />
+          ))}
         </Box>
       </Box>
 
-      <TableContainer component={"div"}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', flex: '1' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', padding: '8px 16px' }}>
           <Box sx={{ flex: '1' }}>
             <IconButton aria-label='Próximo anterior'>
@@ -106,57 +133,60 @@ export function CalendarScreen() {
           </IconButton>
         </Box>
 
-        <Table sx={{ minHeight: '100%', borderTop: '1px solid rgb(224, 224, 224)' }} aria-label="simple table">
-          <TableHead>
-            <TableRow>
-              {daysOfWeek.map((day) => 
-                <TableCell align='center' key={day} sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>
-                  {day}
-                </TableCell>
-              )}
-            </TableRow>
-          </TableHead>
-          
-          <TableBody>
-            {weeks.map((week, index) => (
-              <TableRow key={index}>
-                {
-                  week.map((cell) => (
-                    <TableCell key={cell.date} align='center' sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>
-                      <div style={{ 
-                          verticalAlign: "top", 
-                          overflow: "hidden", 
-                          padding: "8px 4px",
-                          fontWeight: "500",
-                          marginBottom : "8px", 
-                        }}>
-                        {cell.dayOfMonth}
-                      </div>
-
-                      {cell.events.map((event) => (
-                        <button style={{ 
-                            display: "flex",
-                            alignItems: "center",
-                            background: "none", 
-                            border: "none", 
-                            cursor: "pointer", 
-                            textAlign: "left",
-                            whiteSpace: "nowrap",
-                            margin: "4px 0px",
-                          }}>
-                          {event.time && <Icon fontSize='inherit'>watch_later {event.time}</Icon>}
-                          {event.time && <span style={{ margin: "0px 4px" }}>{event.time}</span>}
-                          <span>{event.desc}</span>
-                        </button>
-                      ))}
-                    </TableCell>
-                  ))
-                }
+        <TableContainer sx={{ flex: '1'}} component={"div"}>
+          <Table sx={{ minHeight: '100%', borderTop: '1px solid rgb(224, 224, 224)' }} aria-label="simple table">
+            <TableHead>
+              <TableRow>
+                {daysOfWeek.map((day) => 
+                  <TableCell align='center' key={day} sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>
+                    {day}
+                  </TableCell>
+                )}
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            
+            <TableBody>
+              {weeks.map((week, index) => (
+                <TableRow key={index}>
+                  {
+                    week.map((cell) => (
+                      <TableCell key={cell.date} align='center' sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>
+                        <div style={{ 
+                            verticalAlign: "top", 
+                            overflow: "hidden", 
+                            padding: "8px 4px",
+                            fontWeight: "500",
+                            marginBottom : "8px", 
+                          }}>
+                          {cell.dayOfMonth}
+                        </div>
+
+                        {cell.events.map((event) => (
+                          <button style={{ 
+                              display: "flex",
+                              alignItems: "center",
+                              background: "none", 
+                              border: "none", 
+                              cursor: "pointer", 
+                              textAlign: "left",
+                              whiteSpace: "nowrap",
+                              margin: "4px 0px",
+                            }}>
+                            {event.time && <Icon fontSize='inherit'>watch_later {event.time}</Icon>}
+                            {event.time && <span style={{ margin: "0px 4px" }}>{event.time}</span>}
+                            <span>{event.desc}</span>
+                          </button>
+                        ))}
+                      </TableCell>
+                    ))
+                  }
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>       
+
     </Box>
   )
 }
