@@ -1,30 +1,28 @@
-# React + TypeScript + Vite
+# :checkered_flag: React Agenda
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+# Preview
 
-Currently, two official plugins are available:
+![preview](https://r2.easyimg.io/h35er7x9u/captura_de_tela_2024-02-27_às_22.53.55.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+# :open_book: Sobre o projeto 
 
-## Expanding the ESLint configuration
+# :computer: Tecnologias utilizadas 
+## Front End
+- JSX
+- HTML
+- CSS
+- React
+- Material UI
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+# :runner: Como executar o projeto
 
-- Configure the top-level `parserOptions` property like this:
+```bash
+# Clonar o repositório:
+git clone https://github.com/luisdandolini/react-calendar.git
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+# Instalar as dependências
+npm install
+
+# Executar o projeto
+npm run dev
 ```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
