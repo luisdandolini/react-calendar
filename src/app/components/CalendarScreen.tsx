@@ -43,15 +43,17 @@ function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalenda
         ${currentDay.getDate().toString().padStart(2, "0")}
       `;
 
-      const events: IEventWithCalendar[] = [];
-      for (const event of allEvents) {
-        if (event.date === isoDate) {
-          const callIndex = calendars.findIndex(cal => cal.id === event.calendarId);
-          if (calendarsSelected[callIndex]) {
-            events.push({ ...event, calendar: calendars[callIndex] })
-          }
-        }
-      }
+      const events: IEventWithCalendar[] = Array.isArray(allEvents)
+        ? allEvents
+            .map(event => {
+              const callIndex = calendars.findIndex(cal => cal.id === event.calendarId);
+              if (calendarsSelected[callIndex]) {
+                return { ...event, calendar: calendars[callIndex] };
+              }
+              return null;
+            })
+            .filter(Boolean) as IEventWithCalendar[]  
+        : [];
 
       week.push({ 
         dayOfMonth: currentDay.getDate(), 
@@ -63,8 +65,9 @@ function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalenda
     weeks.push(week);
   } while (currentDay.getMonth() <= currentMonth);
 
-  return weeks
+  return weeks;
 }
+
 
 export function CalendarScreen() {
   const { month } = useParams<{ month: string }>();
@@ -73,17 +76,21 @@ export function CalendarScreen() {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [calendarsSelected, setCalendarSelected] = useState<boolean[]>([]);
   const weeks = generateCalendar(month + "-01", events, calendars, calendarsSelected);
-  const firsDate = weeks[0][0].date;
-  const lastDate = weeks[weeks.length - 1][6].date;
+  const firsDate = weeks.length > 0 ? weeks[0][0].date : '';
+  const lastDate = weeks.length > 0 ? weeks[weeks.length - 1][6].date : '';
 
   useEffect(() => {
-    Promise.all([getCalendars(),
-    getEvents(firsDate, lastDate)]).then(([calendars, events]) => {
-      setCalendars(calendars);
-      setCalendarSelected(calendars.map(() => true));
+    Promise.all([
+      getCalendars(),
+      getEvents(firsDate, lastDate)
+    ]).then(([calendars, events]) => {
+      if (Array.isArray(calendars)) {
+        setCalendars(calendars);
+        setCalendarSelected(calendars.map(() => true));
+      }
       setEvents(events);
     });
-  }, [firsDate, lastDate])
+  }, [firsDate, lastDate]);
 
   function toggleCalendar(i: number) {
     const newValue = [...calendarsSelected];
@@ -101,7 +108,7 @@ export function CalendarScreen() {
 
         <Box sx={{ marginTop: '64px', display: 'flex', flexDirection: 'column' }}>
           <h3>Agendas</h3>
-          {calendars.map((calendar, i) => (
+          {calendars && calendars.map((calendar, i) => (
             <FormControlLabel key={calendar.id} control={ 
               <Checkbox 
                 checked={calendarsSelected[i]} 
@@ -110,7 +117,7 @@ export function CalendarScreen() {
                   color: calendar.color,
                 }}/> 
               } 
-                label={calendar.name} />
+              label={calendar.name} />
           ))}
         </Box>
       </Box>
@@ -154,10 +161,10 @@ export function CalendarScreen() {
             </TableHead>
             
             <TableBody>
-              {weeks.map((week, index) => (
+              {weeks && weeks.map((week, index) => (
                 <TableRow key={index}>
                   {
-                    week.map((cell) => (
+                    week && week.map((cell) => (
                       <TableCell key={cell.date} align='center' sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>
                         <div style={{ 
                             verticalAlign: "top", 
