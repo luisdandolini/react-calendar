@@ -9,7 +9,7 @@ import { Button, Checkbox, FormControlLabel } from '@mui/material';
 import IconButton from '@mui/material/IconButton'
 import Icon from '@mui/material/Icon';
 import { useEffect, useState } from 'react';
-import { ICalendar, IEvent, IUser, getCalendars, getEvents } from '../backend/backend';
+import { ICalendar, IEvent, getCalendars, getEvents } from '../backend/backend';
 import { useParams } from 'react-router-dom';
 import { addMonth, formatMonth } from '../shared/formatMonth';
 import { Link } from 'react-router-dom';
@@ -17,10 +17,6 @@ import { UserMenu } from './UserMenu';
 
 const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
-interface ICalendarHeaderProps {
-  onSignOut: () => void;
-  user: IUser;
-}
 
 type IEventWithCalendar = IEvent & { calendar: ICalendar }; 
 interface ICalendarCell {
@@ -74,7 +70,7 @@ function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalenda
 }
 
 
-export function CalendarScreen(props: ICalendarHeaderProps) {
+export function CalendarScreen() {
   const { month } = useParams<{ month: string }>();
   console.log(month)
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
@@ -146,7 +142,7 @@ export function CalendarScreen(props: ICalendarHeaderProps) {
             <strong style={{ marginLeft: '16px' }}>{ formatMonth(month ?? "") }</strong>
           </Box>
 
-          <UserMenu user={props.user} onSignOut={props.onSignOut} />
+          <UserMenu />
         </Box>
 
         <TableContainer sx={{ flex: '1'}} component={"div"}>

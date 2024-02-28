@@ -4,6 +4,7 @@ import { getToday } from "./shared/dateFunctions";
 import { useEffect, useState } from "react";
 import { IUser, getUserEndpoint } from "./backend/backend";
 import { LoginScreen } from "./components/LoginScreen";
+import { authContext } from "./authContext";
 
 function App() {
   const month = getToday().substring(0, 7);
@@ -16,18 +17,20 @@ function App() {
     )
   }, []);
 
-  function signOut() {
+  function onSignOut() {
     setUser(null);
   }
 
   if(user) {
     return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="/calendar/:month" element={<CalendarScreen user={user} onSignOut={signOut} />} />
-        </Routes>
-        <Navigate to={`/calendar/${month}`} replace />
-      </BrowserRouter>
+      <authContext.Provider value={{user, onSignOut}}>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/calendar/:month" element={<CalendarScreen />} />
+          </Routes>
+          <Navigate to={`/calendar/${month}`} replace />
+        </BrowserRouter>
+      </authContext.Provider>
     )
   } else {
     return (
