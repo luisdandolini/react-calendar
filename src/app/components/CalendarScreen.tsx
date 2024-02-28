@@ -10,6 +10,7 @@ import IconButton from '@mui/material/IconButton'
 import Icon from '@mui/material/Icon';
 import { useEffect, useState } from 'react';
 import { ICalendar, IEvent, getCalendars, getEvents } from '../backend/backend';
+import { getToday } from '../shared/dateFunctions';
 
 const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
@@ -61,10 +62,6 @@ function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalenda
   } while (currentDay.getMonth() <= currentMonth);
 
   return weeks
-}
-
-function getToday(): string {
-  return "2021-06-17";
 }
 
 export function CalendarScreen() {
