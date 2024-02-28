@@ -10,7 +10,9 @@ import IconButton from '@mui/material/IconButton'
 import Icon from '@mui/material/Icon';
 import { useEffect, useState } from 'react';
 import { ICalendar, IEvent, getCalendars, getEvents } from '../backend/backend';
-import { getToday } from '../shared/dateFunctions';
+import { useParams } from 'react-router-dom';
+import { addMonth, formatMonth } from '../shared/formatMonth';
+import { Link } from 'react-router-dom';
 
 const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
@@ -65,10 +67,12 @@ function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalenda
 }
 
 export function CalendarScreen() {
+  const { month } = useParams<{ month: string }>();
+  console.log(month)
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
   const [events, setEvents] = useState<IEvent[]>([]);
   const [calendarsSelected, setCalendarSelected] = useState<boolean[]>([]);
-  const weeks = generateCalendar(getToday(), events, calendars, calendarsSelected);
+  const weeks = generateCalendar(month + "-01", events, calendars, calendarsSelected);
   const firsDate = weeks[0][0].date;
   const lastDate = weeks[weeks.length - 1][6].date;
 
@@ -114,13 +118,20 @@ export function CalendarScreen() {
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: '1' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', padding: '8px 16px' }}>
           <Box sx={{ flex: '1' }}>
-            <IconButton aria-label='Próximo anterior'>
-              <Icon>chevron_left</Icon>
-            </IconButton>
-            <IconButton aria-label='Próximo mês'>
-              <Icon>chevron_right</Icon>
-            </IconButton>
-            <strong style={{ marginLeft: '16px' }}>Junho de 2021</strong>
+
+            <Link to={`/calendar/${addMonth(month ?? "", -1)}`}>
+              <IconButton aria-label='Próximo anterior'>
+                <Icon>chevron_left</Icon>
+              </IconButton>
+            </Link>
+
+            <Link to={`/calendar/${addMonth(month ?? "", 1)}`}>
+              <IconButton aria-label='Próximo mês'>
+                <Icon>chevron_right</Icon>
+              </IconButton>
+            </Link>
+
+            <strong style={{ marginLeft: '16px' }}>{ formatMonth(month ?? "") }</strong>
           </Box>
 
           <IconButton aria-label='Informações do Usuário'>
