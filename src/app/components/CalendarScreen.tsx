@@ -8,16 +8,20 @@ import TableRow from '@mui/material/TableRow';
 import { Avatar, Button, Checkbox, FormControlLabel } from '@mui/material';
 import IconButton from '@mui/material/IconButton'
 import Icon from '@mui/material/Icon';
+import { useEffect, useState } from 'react';
+import { ICalendar, IEvent, getCalendars, getEvents } from '../backend/backend';
 
 const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
 interface ICalendarCell {
   date: string;
+  dayOfMonth: number;
+  events: (IEvent & { calendar: ICalendar })[];
 }
 
-function generateCalendar(date: string): ICalendarCell[][] {
+function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalendar[]): ICalendarCell[][] {
   const weeks: ICalendarCell[][] = [];
-  const jsDate = new Date(date + "T10:00:00");
+  const jsDate = new Date(date + "T12:00:00");
   const currentMonth = jsDate.getMonth();
 
   const currentDay = new Date(jsDate.valueOf());
@@ -33,7 +37,14 @@ function generateCalendar(date: string): ICalendarCell[][] {
         ${(currentDay.getMonth() + 1).toString().padStart(2, "0")}-
         ${currentDay.getDate().toString().padStart(2, "0")}
       `;
-      week.push({ date: isoDate })
+      week.push({ 
+        dayOfMonth: currentDay.getDate(), 
+        date: isoDate, 
+        events: allEvents.filter(event => event.date === isoDate).map(e => {
+          const calendar = calendars.find((cal) => cal.id === e.calendarId)!;
+          return { ...e, calendar };
+        })
+      })
       currentDay.setDate(currentDay.getDate() + 1);
     }
     weeks.push(week);
@@ -43,12 +54,23 @@ function generateCalendar(date: string): ICalendarCell[][] {
 }
 
 function getToday(): string {
-  return "2021-06-01";
+  return "2021-06-17";
 }
 
 export function CalendarScreen() {
-  const weeks = generateCalendar(getToday());
+  const [calendars, setCalendars] = useState<ICalendar[]>([]);
+  const [events, setEvents] = useState<IEvent[]>([]);
+  const weeks = generateCalendar(getToday(), events, calendars);
+  const firsDate = weeks[0][0].date;
+  const lastDate = weeks[weeks.length - 1][6].date;
 
+  useEffect(() => {
+    Promise.all([getCalendars(),
+    getEvents(firsDate, lastDate)]).then(([calendars, events]) => {
+      setCalendars(calendars);
+      setEvents(events);
+    });
+  }, [firsDate, lastDate])
 
   return (
     <Box
@@ -88,7 +110,9 @@ export function CalendarScreen() {
           <TableHead>
             <TableRow>
               {daysOfWeek.map((day) => 
-                <TableCell align='center' key={day} sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>{day}</TableCell>
+                <TableCell align='center' key={day} sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>
+                  {day}
+                </TableCell>
               )}
             </TableRow>
           </TableHead>
@@ -99,7 +123,32 @@ export function CalendarScreen() {
                 {
                   week.map((cell) => (
                     <TableCell key={cell.date} align='center' sx={{ borderRight: '1px solid rgb(224, 224, 224)' }}>
-                      {cell.date}
+                      <div style={{ 
+                          verticalAlign: "top", 
+                          overflow: "hidden", 
+                          padding: "8px 4px",
+                          fontWeight: "500",
+                          marginBottom : "8px", 
+                        }}>
+                        {cell.dayOfMonth}
+                      </div>
+
+                      {cell.events.map((event) => (
+                        <button style={{ 
+                            display: "flex",
+                            alignItems: "center",
+                            background: "none", 
+                            border: "none", 
+                            cursor: "pointer", 
+                            textAlign: "left",
+                            whiteSpace: "nowrap",
+                            margin: "4px 0px",
+                          }}>
+                          {event.time && <Icon fontSize='inherit'>watch_later {event.time}</Icon>}
+                          {event.time && <span style={{ margin: "0px 4px" }}>{event.time}</span>}
+                          <span>{event.desc}</span>
+                        </button>
+                      ))}
                     </TableCell>
                   ))
                 }
