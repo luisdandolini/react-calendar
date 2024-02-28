@@ -16,11 +16,15 @@ function App() {
     )
   }, []);
 
+  function signOut() {
+    setUser(null);
+  }
+
   if(user) {
     return (
       <BrowserRouter>
         <Routes>
-          <Route path="/calendar/:month" element={<CalendarScreen />} />
+          <Route path="/calendar/:month" element={<CalendarScreen user={user} onSignOut={signOut} />} />
         </Routes>
         <Navigate to={`/calendar/${month}`} replace />
       </BrowserRouter>

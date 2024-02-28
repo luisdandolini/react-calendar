@@ -5,17 +5,22 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import { Avatar, Button, Checkbox, FormControlLabel } from '@mui/material';
+import { Button, Checkbox, FormControlLabel } from '@mui/material';
 import IconButton from '@mui/material/IconButton'
 import Icon from '@mui/material/Icon';
 import { useEffect, useState } from 'react';
-import { ICalendar, IEvent, getCalendars, getEvents } from '../backend/backend';
+import { ICalendar, IEvent, IUser, getCalendars, getEvents } from '../backend/backend';
 import { useParams } from 'react-router-dom';
 import { addMonth, formatMonth } from '../shared/formatMonth';
 import { Link } from 'react-router-dom';
+import { UserMenu } from './UserMenu';
 
 const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
+interface ICalendarHeaderProps {
+  onSignOut: () => void;
+  user: IUser;
+}
 
 type IEventWithCalendar = IEvent & { calendar: ICalendar }; 
 interface ICalendarCell {
@@ -69,7 +74,7 @@ function generateCalendar(date: string, allEvents: IEvent[], calendars: ICalenda
 }
 
 
-export function CalendarScreen() {
+export function CalendarScreen(props: ICalendarHeaderProps) {
   const { month } = useParams<{ month: string }>();
   console.log(month)
   const [calendars, setCalendars] = useState<ICalendar[]>([]);
@@ -141,11 +146,7 @@ export function CalendarScreen() {
             <strong style={{ marginLeft: '16px' }}>{ formatMonth(month ?? "") }</strong>
           </Box>
 
-          <IconButton aria-label='Informações do Usuário'>
-            <Avatar>
-              <Icon>person</Icon>
-            </Avatar>
-          </IconButton>
+          <UserMenu user={props.user} onSignOut={props.onSignOut} />
         </Box>
 
         <TableContainer sx={{ flex: '1'}} component={"div"}>
